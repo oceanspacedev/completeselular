@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LocateFixed } from 'lucide-react'
 import site from '../data/site.json'
 import houseBanners from '../data/banners.json'
 import kindShortcuts from '../data/kinds.json'
 import brandTiles from '../data/brand-tiles.json'
 import { brands } from '../data/brands.json'
 import { useModels, usePosts } from '../lib/data'
+import { distanceKm, formatDistance, useMyLocation } from '../lib/location'
+import branches from '../data/branches.json'
 import { formatDate, PRICE_RANGES, productKind, readableTitle } from '../lib/format'
 import { absoluteUrl, DEFAULT_DESCRIPTION, SITE_URL } from '../lib/seo'
 import { waLink } from '../lib/wa'
@@ -146,6 +148,7 @@ export default function Home() {
       <h1 className="sr-only">Complete Selular — toko HP, tablet &amp; aksesoris resmi</h1>
       {/* Section order follows Eraspace's home: banners, brand tiles, a recommendation shelf on a
           coloured band, the store's promises, posters, then shelves */}
+      <NearestStore />
       <Hero />
       <BrandTiles />
 
@@ -359,6 +362,66 @@ function Hero() {
         )}
       </div>
     </section>
+  )
+}
+
+// One line under the header, as on Eraspace: a thin navy strip that reads as part of the header
+// (rounded off at the bottom), the whole line one tap target. Turn the location on to see the
+// nearest branch; the Toko Cabang page shares the position (lib/location), so the link opens it
+// already nearest first.
+function NearestStore() {
+  const { status, position, enable } = useMyLocation()
+  const nearest = useMemo(() => {
+    if (!position) return null
+    let best = null
+    for (const b of branches) {
+      if (b.lat == null) continue
+      const km = distanceKm(position, b)
+      if (!best || km < best.km) best = { ...b, km }
+    }
+    return best
+  }, [position])
+
+  const row =
+    'flex min-h-10 w-full items-center gap-2 text-left text-[13px] text-white/90 transition-colors hover:text-white'
+  const inner = (text, arrow = true) => (
+    <>
+      <LocateFixed className="size-4 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{text}</span>
+      {arrow && <ChevronRight className="size-4 shrink-0 text-white/60" aria-hidden />}
+    </>
+  )
+
+  return (
+    // White behind it, so the rounded corners show the banner's band rather than the grey page. Same
+    // navy as the header row above it (the nav strip's darker navy from lg)
+    <div className="bg-white">
+      <div className="bg-navy-700 lg:bg-navy-800 rounded-b-2xl" aria-live="polite">
+        <div className="container-page">
+          {nearest ? (
+            <Link to="/daftar-toko-cabang" className={row}>
+              {inner(
+                <>
+                  Toko terdekat: <b className="font-bold text-white">{nearest.name}</b> · {formatDistance(nearest.km)}
+                </>,
+              )}
+            </Link>
+          ) : status === 'locating' ? (
+            <p className={row}>{inner('Mencari lokasimu…', false)}</p>
+          ) : (
+            <button type="button" onClick={enable} className={row}>
+              {inner(
+                status === 'denied'
+                  ? 'Izin lokasi ditolak. Izinkan di browser, lalu ketuk lagi'
+                  : status === 'unavailable'
+                    ? 'Lokasi belum bisa didapat. Ketuk untuk coba lagi'
+                    : 'Aktifkan lokasi untuk melihat toko terdekat',
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   )
 }
 

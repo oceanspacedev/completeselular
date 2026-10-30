@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ExternalLink, Search, X } from 'lucide-react'
+import { ExternalLink, LocateFixed, Search, X } from 'lucide-react'
 import branches from '../data/branches.json'
 import { waLink } from '../lib/wa'
+import { distanceKm, formatDistance, useMyLocation } from '../lib/location'
 import { WhatsAppIcon } from '../components/icons'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
@@ -132,9 +133,23 @@ export default function Branches() {
   }, [needle, urlQ, params])
 
   const found = useMemo(() => search(needle), [needle])
-  const list = city ? found.filter((b) => b.city === city) : found
-  // Grouped by city in chip order; `ordered` is the list exactly as it appears on screen
-  const groups = CITIES.map((c) => ({ city: c, items: list.filter((b) => b.city === c) })).filter((g) => g.items.length)
+  const location = useMyLocation()
+  const here = location.position
+  const list = useMemo(() => {
+    const inCity = city ? found.filter((b) => b.city === city) : found
+    return here ? inCity.map((b) => ({ ...b, km: b.lat != null ? distanceKm(here, b) : null })) : inCity
+  }, [found, city, here])
+  // Grouped by city in chip order, or one list nearest first once the location is on.
+  // `ordered` is the list exactly as it appears on screen.
+  const groups = here
+    ? [
+        {
+          id: 'terdekat',
+          title: 'Terdekat dari lokasimu',
+          items: [...list].sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity)),
+        },
+      ]
+    : CITIES.map((c) => ({ id: c, title: c, items: list.filter((b) => b.city === c) })).filter((g) => g.items.length)
   const ordered = groups.flatMap((g) => g.items)
 
   // ?cabang= holds the chosen branch. On desktop the map always shows one, so the first result
@@ -302,6 +317,8 @@ export default function Branches() {
         style={band ? { '--band': `${band}px` } : undefined}
         className="container-page py-3 sm:py-4"
       >
+        <LocationBar location={location} />
+
         {/* Always announced; only shown while a filter or search narrows the list */}
         <p role="status" className={!city && !needle ? 'sr-only' : 'text-muted mb-2 text-[13px] sm:mb-3'}>
           {status}
@@ -315,9 +332,9 @@ export default function Branches() {
               {/* Phones: one white band edge to edge, like the home sections; a rounded card from sm */}
               <div className="border-line sm:card -mx-4 border-y bg-white [overflow-anchor:none] sm:mx-0 sm:overflow-hidden sm:border-0">
                 {groups.map((g, i) => (
-                  <section key={g.city} aria-labelledby={`kota-${g.city}`} className={i ? 'border-line border-t' : ''}>
-                    <h2 id={`kota-${g.city}`} className="text-ink px-4 pt-4 pb-1 text-sm font-extrabold">
-                      {g.city}
+                  <section key={g.id} aria-labelledby={`kota-${g.id}`} className={i ? 'border-line border-t' : ''}>
+                    <h2 id={`kota-${g.id}`} className="text-ink px-4 pt-4 pb-1 text-sm font-extrabold">
+                      {g.title}
                     </h2>
                     <ul className="divide-line divide-y">
                       {g.items.map((b) => (
@@ -398,6 +415,39 @@ export default function Branches() {
   )
 }
 
+// "Aktifkan lokasi" above the list, as a small card: what it does on the left, one button on the
+// right. Once on, the list is one nearest-first list with distances; the position stays on this
+// device (lib/location).
+const LOCATION_TEXT = {
+  idle: ['Cari toko terdekat', 'Aktifkan lokasi untuk mengurutkan cabang dari yang terdekat.', 'Aktifkan'],
+  locating: ['Mencari lokasimu…', 'Izinkan akses lokasi bila browser memintanya.', 'Aktifkan'],
+  on: ['Urut dari yang terdekat', 'Memakai lokasimu, hanya di perangkat ini.', 'Matikan'],
+  denied: ['Izin lokasi ditolak', 'Izinkan lokasi untuk situs ini di pengaturan browser.', 'Coba lagi'],
+  unavailable: ['Lokasi belum bisa didapat', 'Pastikan lokasi atau GPS perangkat menyala.', 'Coba lagi'],
+}
+
+function LocationBar({ location }) {
+  const { status, enable, off } = location
+  const [title, note, action] = LOCATION_TEXT[status]
+  return (
+    <div className="card mb-3 flex items-center gap-3 p-3 sm:p-4" aria-live="polite">
+      <LocateFixed className="text-brand-600 size-5 shrink-0" aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p className="text-ink text-sm font-bold">{title}</p>
+        <p className="text-muted mt-0.5 text-[13px] leading-snug">{note}</p>
+      </div>
+      <button
+        type="button"
+        onClick={status === 'on' ? off : enable}
+        disabled={status === 'locating'}
+        className={`${status === 'idle' || status === 'locating' ? 'btn-primary' : 'btn-ghost'} min-h-9 shrink-0 px-3.5 py-1.5 text-[13px]`}
+      >
+        {action}
+      </button>
+    </div>
+  )
+}
+
 // Keeps keyboard focus clear of the sticky header (html scroll-padding) and the search band below it
 const UNDER_BAND = 'scroll-mt-[var(--band,86px)] [@media(max-height:30rem)]:scroll-mt-0'
 
@@ -414,7 +464,10 @@ function BranchRow({ b, desktop, active, onSelect }) {
       <span className={`block text-[15px] leading-snug font-bold ${active ? 'text-brand-700' : 'text-ink'}`}>
         {b.name}
       </span>
-      <span className="text-muted mt-0.5 block truncate text-[13px]">{b.short}</span>
+      <span className="text-muted mt-0.5 block truncate text-[13px]">
+        {b.km != null && <span className="text-brand-700 font-bold">{formatDistance(b.km)} · </span>}
+        {b.short}
+      </span>
     </>
   )
 

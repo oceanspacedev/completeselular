@@ -4,160 +4,206 @@
     "address": "Jl. Fatahillah/Sumber Plered, Blok Randualas No. 70, RT.002/RW.001, Megu Cilik, Kec. Weru, Kabupaten Cirebon, Jawa Barat 45159",
     "maps": "https://maps.app.goo.gl/G8FbNqouBNncpiXD8",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7176518,
+    "lng": 108.5020974
   },
   {
     "name": "Complete Selular Sindang",
     "address": "Cipeujeuh Wetan, Kec. Lemahabang, Kabupaten Cirebon, Jawa Barat 45183",
     "maps": "https://goo.gl/maps/vtCsRb3kGsZm8WpQA",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.830592,
+    "lng": 108.6230659
   },
   {
     "name": "Complete Selular Surya Toserba",
     "address": "Surya Toserba Cirebon, Jl. Karanggetas No. 23 Lantai 1, Pekalangan, Kec. Pekalipan, Kota Cirebon, Jawa Barat 45118",
     "maps": "https://maps.app.goo.gl/gyKU9o3TqkBiUSFt9",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7140177,
+    "lng": 108.5621016
   },
   {
     "name": "Complete Selular Tuparev",
     "address": "Jl. Tuparev No. 109, Cirebon, Kedawung, Sutawinangun, Jawa Barat 45153",
     "maps": "https://goo.gl/maps/WeHV3pNGj6JDE3288",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7109891,
+    "lng": 108.5391739
   },
   {
     "name": "HP Mart Sindang",
     "address": "Samping Bank Mandiri, Alun Alun Lemahabang, Jl. Raya Karangsuwung, Lemahabang Kulon, Kec. Lemahabang, Kabupaten Cirebon, Jawa Barat 45183",
     "maps": "https://maps.app.goo.gl/UTdiyGgVFgyZjUKCA",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.8297596,
+    "lng": 108.6276008
   },
   {
     "name": "Complete Selular Perumnas",
     "address": "Jl. Gn. Malabar I No. 282, RT. 10/RW. 05 (Depan SMAN 3 Cirebon), Cirebon, Harjamukti, Kecapi, Jawa Barat 45142",
     "maps": "https://goo.gl/maps/jUHnT6NMxBBPCoJu9",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7488187,
+    "lng": 108.5607413
   },
   {
     "name": "OPPO Store Tentara Pelajar",
     "address": "Jl. Tentara Pelajar No. 72 B-C (Samping Nadita Collection), Cirebon, Kejaksan, Jawa Barat 45123",
     "maps": "https://goo.gl/maps/36XwnY9sjuLo9z9q9",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7145232,
+    "lng": 108.5535275
   },
   {
     "name": "Complete Selular Cilacap",
     "address": "Jl. Brigjen Katamso No. 19 (Sebelah Cafe Plataran), Cilacap, Cilacap Tengah, Sidanegara, Jawa Tengah 53223",
     "maps": "https://goo.gl/maps/if9oMH37tGfRAfDp6",
     "city": "Cilacap",
-    "province": "Jawa Tengah"
+    "province": "Jawa Tengah",
+    "lat": -7.723242,
+    "lng": 109.0110846
   },
   {
     "name": "Complete Selular Kroya",
     "address": "Jl. Jend. Gatot Subroto No. 121, Kroya, Kec. Kroya, Kabupaten Cilacap, Jawa Tengah 53282",
     "maps": "https://maps.app.goo.gl/RU2d919rNJrj9wNw7",
     "city": "Cilacap",
-    "province": "Jawa Tengah"
+    "province": "Jawa Tengah",
+    "lat": -7.6328561,
+    "lng": 109.25073
   },
   {
     "name": "Complete Selular Babakan",
     "address": "Jl. Pangeran Surajaya No. 139 (Samping Pasar Babakan), Cirebon, Babakan, Jawa Barat 45191",
     "maps": "https://goo.gl/maps/zUbTXqTaYpc1deRv9",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.8722865,
+    "lng": 108.7219044
   },
   {
     "name": "Complete Selular Ciledug",
     "address": "Samping Bank Mandiri, Jl. Merdeka Barat No. 66, Ciledug Tengah, Ciledug, Cirebon, Jawa Barat 45188",
     "maps": "https://maps.app.goo.gl/pA9SsDb9Xnfo7bD96",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.9065196,
+    "lng": 108.7472557
   },
   {
     "name": "Mi Shop Ciledug",
     "address": "Jl. Merdeka Utara (Depan Pasar Ciledug), Cirebon, Ciledug, Tenjomaya, Jawa Barat 45188",
     "maps": "https://goo.gl/maps/M8FuGqHThSKTmHRi8",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.9053184,
+    "lng": 108.7482351
   },
   {
     "name": "Complete Selular Gebang",
     "address": "Jl. Pangeran Sutajaya (Sebelah Utara Pegadaian Gebang), Cirebon, Gebang, Gebang Udik, Jawa Barat 45191",
     "maps": "https://goo.gl/maps/ge5Luve42wEQBhDN7",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.8225136,
+    "lng": 108.7264148
   },
   {
     "name": "Complete Selular Pabuaran",
     "address": "Jl. Letjend S. Parman, Pabuaran Wetan, Kec. Pabuaran, Kabupaten Cirebon, Jawa Barat 45188",
     "maps": "https://maps.app.goo.gl/Au5WbPnJ8s9nMKrV6",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.9049523,
+    "lng": 108.7222156
   },
   {
     "name": "HP Mart Ciledug",
     "address": "Jl. Merdeka Barat No. 100B, Cirebon, Ciledug, Tenjomaya, Jawa Barat 45188",
     "maps": "https://goo.gl/maps/JcYXQypThm3wjg689",
     "city": "Cirebon",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.9067409,
+    "lng": 108.7415817
   },
   {
     "name": "Complete Selular Jatiwangi 2",
     "address": "Jl. Raya Ciborelang No. 6, RT.2, Ciborelang, Kec. Jatiwangi, Kabupaten Majalengka, Jawa Barat 45454",
     "maps": "https://maps.app.goo.gl/UEmymEZMnyqcDPodA",
     "city": "Majalengka",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7294919,
+    "lng": 108.2662806
   },
   {
     "name": "Complete Selular Jatiwangi",
     "address": "Jl. Raya Sutawangi No. 52 (Depan Koramil), Majalengka, Jatiwangi, Jawa Barat 45454",
     "maps": "https://goo.gl/maps/WBfKqq2vL2qP5k9j7",
     "city": "Majalengka",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.7330817,
+    "lng": 108.2606075
   },
   {
     "name": "Complete Selular Patrol",
     "address": "Jl. Raya Patrol No. 33, RT. 01/RW. 01 (Samping Toko HP Glori), Indramayu, Patrol, Patrol Lor, Jawa Barat 45257",
     "maps": "https://goo.gl/maps/fpPEE8VFByC4Z8YL8",
     "city": "Indramayu",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.3141505,
+    "lng": 107.9931112
   },
   {
     "name": "Selular Plus Jatibarang",
     "address": "Jl. Mayor Dasuki No. 70, Jatibarang, Kec. Jatibarang, Kabupaten Indramayu, Jawa Barat 45273",
     "maps": "https://maps.app.goo.gl/yKSJG4HWTADi3zwY9",
     "city": "Indramayu",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.4689699,
+    "lng": 108.301559
   },
   {
     "name": "Unboxing Store Jatibarang 1",
     "address": "Jl. Siliwangi No. 113 (Samping Telering Jatibarang), Indramayu, Jatibarang, Jawa Barat 45273",
     "maps": "https://goo.gl/maps/bUm3MYz1GU2WrnuDA",
     "city": "Indramayu",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.4745456,
+    "lng": 108.3043428
   },
   {
     "name": "Inti Phonsel Majalengka",
     "address": "Jl. KH Abdul Halim No. 278, Lampu Merah Prapatan Mambo, Majalengka Wetan, Kec. Majalengka, Kabupaten Majalengka, Jawa Barat",
     "maps": "https://goo.gl/maps/dti6DPDQAPuigioXA",
     "city": "Majalengka",
-    "province": "Jawa Barat"
+    "province": "Jawa Barat",
+    "lat": -6.8352727,
+    "lng": 108.2321811
   },
   {
     "name": "Complete Plaza Cell Pemalang",
     "address": "Jl. RA Kartini No. 166, Petarukan, Pemalang, Jawa Tengah",
     "maps": "https://maps.app.goo.gl/khJAVyvg3pLaHX5X9",
     "city": "Pemalang",
-    "province": "Jawa Tengah"
+    "province": "Jawa Tengah",
+    "lat": -6.8841067,
+    "lng": 109.4583614
   },
   {
     "name": "Complete Selular Tegal",
     "address": "Jl. Raya Kapten Sudibyo No. 80, Desa Pekauman, Kec. Tegal Barat, Kota Tegal, Jawa Tengah 52125",
     "maps": "https://goo.gl/maps/4QdG8XC5gDDvCs21A",
     "city": "Tegal",
-    "province": "Jawa Tengah"
+    "province": "Jawa Tengah",
+    "lat": -6.8724335,
+    "lng": 109.1277591
   }
 ]

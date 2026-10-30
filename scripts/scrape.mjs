@@ -1240,11 +1240,37 @@ async function scrapeBranches() {
     const m = addr.match(/\b(?:Kota|Kabupaten|Kab\.)\s+([a-z]+)/i) || addr.match(new RegExp(`\\b(${CITIES})\\b`, 'i'))
     return m ? titleWord(m[1]) : 'Lainnya'
   }
-  return branches.map((b) => {
+  const out = []
+  for (const b of branches) {
     const city = cityOf(b.address)
     const province = PROVINCE_OF[city] ?? null
-    return { ...b, address: withProvince(b.address, province), city, province }
-  })
+    out.push({ ...b, address: withProvince(b.address, province), city, province, ...(await coordsOf(b.maps)) })
+  }
+  return out
+}
+
+// Map links are short goo.gl URLs; the Google Maps URL they redirect to carries the pin
+// ("…!3d-6.7176518!4d108.5020974" or "/@-6.71,108.50,15z"). Used for "toko terdekat".
+// Resolved once and cached, since the short links never change.
+const COORDS_CACHE = path.join(CACHE, 'map-coords.json')
+let coordsCache
+async function coordsOf(url) {
+  if (!url) return {}
+  coordsCache ??= JSON.parse(await fs.readFile(COORDS_CACHE, 'utf8').catch(() => '{}'))
+  if (!(url in coordsCache)) {
+    let next = url
+    let found = null
+    for (let hop = 0; hop < 4 && next && !found; hop++) {
+      const res = await fetch(next, { redirect: 'manual' }).catch(() => null)
+      const location = res?.headers.get('location')
+      const m = location?.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ?? location?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+      if (m) found = { lat: +m[1], lng: +m[2] }
+      next = location && new URL(location, next).href
+    }
+    coordsCache[url] = found
+    await fs.writeFile(COORDS_CACHE, JSON.stringify(coordsCache, null, 2))
+  }
+  return coordsCache[url] ?? {}
 }
 
 // Half the addresses stop at the village ("…, Cirebon, Kedawung, Sutawinangun 45153"), which
