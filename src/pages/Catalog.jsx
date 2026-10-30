@@ -4,6 +4,7 @@ import { Check, ChevronDown, SlidersHorizontal, X } from 'lucide-react'
 import { brands, categories } from '../data/brands.json'
 import { KINDS, PRICE_RANGES, productKind } from '../lib/format'
 import { useModels } from '../lib/data'
+import { modelKey } from '../lib/variants'
 import { waLink } from '../lib/wa'
 import { GridSkeleton, ProductGrid } from '../components/ProductCard'
 import PageHeader from '../components/PageHeader'
@@ -13,9 +14,11 @@ import Dialog from '../components/Dialog'
 import { WhatsAppIcon } from '../components/icons'
 import Seo from '../components/Seo'
 
-// Models without a price always sink to the end
+// Models without a price always sink to the end. "Rekomendasi" is not a plain comparison, see recommended()
+const newestFirst = (a, b) => (b.date ?? '').localeCompare(a.date ?? '')
 const SORTS = [
-  { id: 'new', label: 'Terbaru', compare: (a, b) => (b.date ?? '').localeCompare(a.date ?? '') },
+  { id: 'rec', label: 'Rekomendasi', compare: newestFirst },
+  { id: 'new', label: 'Terbaru', compare: newestFirst },
   {
     id: 'price-asc',
     label: 'Harga terendah',
@@ -44,7 +47,7 @@ function haystack(m) {
 const kinds = new WeakMap()
 const kindOf = (m) => (kinds.has(m) ? kinds.get(m) : kinds.set(m, productKind(m.name)).get(m))
 
-// Kind and brand are checked last, so their chips can count how many models each one would leave
+// Kind and brand are checked last, so the kind tabs and brand chips can count how many models each would leave
 // with the other filters kept (kinds counted within the chosen brand, brands within the chosen kind)
 function filterModels(models, { q, kind, brand, category, price, sort }) {
   const words = q.toLowerCase().split(/\s+/).filter(Boolean)
@@ -62,11 +65,42 @@ function filterModels(models, { q, kind, brand, category, price, sort }) {
     brandCounts[m.brand] = (brandCounts[m.brand] ?? 0) + 1
     if (!brand || m.brand === brand) results.push(m)
   }
+  if (sort === 'rec') return { results: recommended(results), brandCounts, kindCounts }
   const compare = SORTS.find((s) => s.id === sort).compare
-  // While searching, the default order puts phones and tablets ahead of accessories, so "redmi"
-  // opens on Redmi phones rather than the newer Redmi Watch
+  // While searching by newest, phones and tablets come ahead of accessories, so "redmi" opens on
+  // Redmi phones rather than the newer Redmi Watch
   results.sort(words.length && sort === 'new' ? (a, b) => isDevice(b) - isDevice(a) || compare(a, b) : compare)
   return { results, brandCounts, kindCounts }
+}
+
+// The default order. Newest first, but one listing per model before any second capacity of it, and
+// brands taking turns, so the first screen shows a range of phones instead of eight iPhone 18
+// capacities in a row. Phones and tablets come ahead of accessories within each pass.
+function recommended(list) {
+  const byDate = [...list].sort(newestFirst)
+  const seen = new Set()
+  const firsts = []
+  const others = []
+  for (const m of byDate) {
+    const key = modelKey(m.brand, m.name)
+    ;(seen.has(key) ? others : firsts).push(m)
+    seen.add(key)
+  }
+  return [...brandsInTurn(devicesFirst(firsts)), ...brandsInTurn(devicesFirst(others))]
+}
+
+const devicesFirst = (list) => [...list.filter(isDevice), ...list.filter((m) => !isDevice(m))]
+
+// Round robin over brands, each keeping its own order; brands in the order they first appear
+function brandsInTurn(list) {
+  const queues = new Map()
+  for (const m of list) {
+    if (!queues.has(m.brand)) queues.set(m.brand, [])
+    queues.get(m.brand).push(m)
+  }
+  const out = []
+  while (out.length < list.length) for (const q of queues.values()) if (q.length) out.push(q.shift())
+  return out
 }
 
 const DEVICES = new Set(['phone', 'tablet'])
@@ -90,7 +124,7 @@ export default function Catalog() {
     brand: params.get(KEYS.brand) ?? '',
     category: params.get(KEYS.category) ?? '',
     price: params.get(KEYS.price) ?? '',
-    sort: SORTS.some((s) => s.id === sortParam) ? sortParam : 'new',
+    sort: SORTS.some((s) => s.id === sortParam) ? sortParam : 'rec',
   }
   // "Tampilkan lebih banyak" progress lives in the URL so Back from a product restores it
   const shown = Math.max(PAGE, parseInt(params.get(SHOWN), 10) || PAGE)
@@ -112,7 +146,7 @@ export default function Catalog() {
   const apply = (changes, { replace = false } = {}) => {
     const next = new URLSearchParams(paramsRef.current)
     for (const [key, value] of Object.entries(changes)) {
-      setOrDelete(next, KEYS[key], key === 'sort' && value === 'new' ? '' : value)
+      setOrDelete(next, KEYS[key], key === 'sort' && value === 'rec' ? '' : value)
     }
     next.delete(SHOWN)
     scrollToResults.current = !filtersOpen
@@ -201,7 +235,10 @@ export default function Catalog() {
     f.category && { key: 'category', label: categoryName, remove: `Hapus filter ${categoryName}` },
     f.price && { key: 'price', label: priceLabel, remove: `Hapus filter harga ${priceLabel}` },
   ].filter(Boolean)
-  const filterCount = active.filter((a) => a.key !== 'q').length
+  // The Filter button's badge counts what the panel sets; search and kind have their own controls
+  const filterCount = active.filter((a) => a.key !== 'q' && a.key !== 'kind').length
+  // The kind tabs already show the chosen kind, so it gets no removable chip of its own
+  const chips = active.filter((a) => a.key !== 'kind')
 
   const wanted = [
     f.q && `*${f.q}*`,
@@ -221,7 +258,6 @@ export default function Catalog() {
       f={f}
       options={options}
       brandCounts={models && brandCounts}
-      kindCounts={models && kindCounts}
       onChange={(key, value) => apply({ [key]: value })}
     />
   )
@@ -229,13 +265,13 @@ export default function Catalog() {
   return (
     <>
       <Seo title="Katalog Produk" description="Daftar harga HP, tablet & gadget terbaru di Complete Selular." />
-      <PageHeader title="Katalog Produk" />
+      <PageHeader title="Katalog Produk" compact />
 
       <div className="container-page grid gap-4 py-3 sm:py-4 lg:grid-cols-[240px_1fr]">
         {/* Desktop sidebar; phones and tablets get the same filters in a bottom sheet */}
         <aside
           aria-labelledby={`${panelId}-side`}
-          className="card hidden p-4 lg:sticky lg:top-[7.75rem] lg:block lg:max-h-[calc(100dvh-8.75rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain"
+          className="card hidden [scrollbar-width:thin] [scrollbar-color:var(--color-line)_transparent] p-4 lg:sticky lg:top-[7.75rem] lg:block lg:max-h-[calc(100dvh-8.75rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain"
         >
           <h2 id={`${panelId}-side`} className="text-ink mb-3 text-base font-extrabold">
             Filter
@@ -244,14 +280,42 @@ export default function Catalog() {
         </aside>
 
         <div ref={resultsRef} className="min-w-0">
-          {/* Marketplace toolbar: result count left, filter + sort right */}
-          <div className="card mb-3 flex flex-wrap items-center gap-2 px-3 py-2 sm:min-h-14 sm:px-4">
-            <div className="w-full sm:me-auto sm:w-auto">
+          {/* Kind tabs: plain names with a blue underline on the active one, scrolling sideways on
+              small phones. The same choice as the "Jenis" filter, one tap away. */}
+          <nav aria-label="Jenis produk" className="-mx-4 mb-2 scrollbar-none overflow-x-auto px-4 sm:mx-0 sm:px-0">
+            <ul className="border-line flex min-w-max gap-5 border-b sm:gap-7">
+              {[{ id: '', label: 'Semua' }, ...KINDS].map((k) => {
+                const on = f.kind === k.id
+                // A kind the current search and filters leave empty is shown but cannot be picked
+                const empty = models && k.id && !on && !kindCounts[k.id]
+                return (
+                  <li key={k.id || 'all'}>
+                    <button
+                      type="button"
+                      onClick={() => apply({ kind: k.id })}
+                      aria-current={on ? 'true' : undefined}
+                      disabled={empty}
+                      className={`-mb-px inline-flex min-h-11 items-center border-b-2 text-[15px] font-bold transition-colors disabled:opacity-40 ${
+                        on ? 'border-brand-600 text-brand-700' : 'text-muted enabled:hover:text-ink border-transparent'
+                      }`}
+                    >
+                      {k.label}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
+
+          {/* Marketplace toolbar: result count left, filter + sort right, in one row. On phones and
+              tablets it stays pinned under the site header (100px, 64px from sm) while scrolling. */}
+          <div className="card sticky top-[100px] z-20 mb-3 flex items-center gap-2 px-3 py-2 sm:top-16 sm:min-h-14 sm:px-4 lg:static [@media(max-height:30rem)]:static">
+            <div className="me-auto min-w-0">
               {models ? (
                 <h2
                   ref={countRef}
                   tabIndex={-1}
-                  className="text-muted rounded text-sm font-normal focus-visible:outline-offset-4"
+                  className="text-muted rounded text-sm font-normal whitespace-nowrap focus-visible:outline-offset-4"
                 >
                   <b className="text-ink font-extrabold">{results.length}</b> produk
                 </h2>
@@ -267,7 +331,7 @@ export default function Catalog() {
               aria-expanded={filtersOpen}
               // The panel only exists while the sheet is open
               aria-controls={filtersOpen ? panelId : undefined}
-              className={`${CONTROL} flex-1 justify-center gap-2 px-3 font-bold sm:flex-none lg:hidden`}
+              className={`${CONTROL} justify-center gap-1.5 px-2.5 font-bold sm:gap-2 sm:px-3 lg:hidden`}
             >
               <SlidersHorizontal className="text-muted size-4" aria-hidden /> Filter
               {filterCount > 0 && (
@@ -281,7 +345,7 @@ export default function Catalog() {
               )}
             </button>
 
-            <div className="relative flex-1 sm:flex-none">
+            <div className="relative">
               <select
                 aria-label="Urutkan"
                 value={f.sort}
@@ -298,7 +362,7 @@ export default function Catalog() {
                   apply({ sort: e.target.value }, { replace: sortPushed.current })
                   sortPushed.current = true
                 }}
-                className={`${CONTROL} w-full appearance-none pr-9 pl-3 font-semibold`}
+                className={`${CONTROL} w-full appearance-none pr-8 pl-2.5 font-semibold sm:pr-9 sm:pl-3`}
               >
                 {SORTS.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -307,7 +371,7 @@ export default function Catalog() {
                 ))}
               </select>
               <ChevronDown
-                className="text-muted pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2"
+                className="text-muted pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 sm:right-3"
                 aria-hidden
               />
             </div>
@@ -330,9 +394,9 @@ export default function Catalog() {
             <GridSkeleton columns="sidebar" />
           ) : (
             <>
-              {active.length > 0 && (
+              {chips.length > 0 && (
                 <div ref={chipsRef} className="mb-3 flex flex-wrap items-center gap-2">
-                  {active.map((a, i) => (
+                  {chips.map((a, i) => (
                     <button
                       key={a.key}
                       type="button"
@@ -360,7 +424,13 @@ export default function Catalog() {
               {results.length ? (
                 <>
                   <div ref={gridRef}>
-                    <ProductGrid products={results.slice(0, shown)} priorityCount={2} columns="sidebar" />
+                    {/* Sorted by newest, a "Baru" label on every card says nothing */}
+                    <ProductGrid
+                      products={results.slice(0, shown)}
+                      priorityCount={2}
+                      columns="sidebar"
+                      showNewBadge={f.sort !== 'new'}
+                    />
                   </div>
                   {remaining > 0 && (
                     <div className="mt-4 text-center">
@@ -450,21 +520,10 @@ export default function Catalog() {
 const CONTROL =
   'border-line text-ink hover:border-brand-300 inline-flex h-10 items-center rounded-lg border bg-white text-sm transition-colors pointer-coarse:h-11'
 
-function FilterPanel({ f, options, brandCounts, kindCounts, onChange }) {
+// Kind is not in here: it has its own tabs above the list
+function FilterPanel({ f, options, brandCounts, onChange }) {
   return (
     <div className="divide-line space-y-4 divide-y [&>*:not(:first-child)]:pt-4">
-      <FilterGroup title="Jenis">
-        {KINDS.map((k) => (
-          <Chip
-            key={k.id}
-            active={f.kind === k.id}
-            count={kindCounts && (kindCounts[k.id] ?? 0)}
-            onClick={() => onChange('kind', f.kind === k.id ? '' : k.id)}
-          >
-            {k.label}
-          </Chip>
-        ))}
-      </FilterGroup>
       {/* A single category (everything is "Mobiles" today) filters nothing, so hide the group */}
       {options.categories.length > 1 && (
         <FilterGroup title="Kategori">

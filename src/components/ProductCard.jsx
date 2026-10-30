@@ -7,7 +7,7 @@ import { compare, useCompare } from '../lib/compare'
 import { groupModels } from '../lib/variants'
 import Img from './Img'
 
-const NEW_DAYS = 45
+const NEW_DAYS = 14
 
 // "sidebar" is for grids that share the row with a filter column (Catalog).
 const COLUMNS = {
@@ -145,11 +145,17 @@ export default function ProductCard({ p, priority, showNewBadge = true, sizes = 
 
 // products: models from useModels() (plain listings still work). className is appended to the
 // grid, e.g. to hide items that would leave a ragged last row at one breakpoint.
-export function ProductGrid({ products, priorityCount = 0, columns = 'default', className = '' }) {
+export function ProductGrid({ products, priorityCount = 0, columns = 'default', showNewBadge, className = '' }) {
   return (
     <div className={`grid gap-3 sm:gap-4 ${COLUMNS[columns]} ${className}`}>
       {products.map((p, i) => (
-        <ProductCard key={p.key ?? p.slug} p={p} priority={i < priorityCount} sizes={SIZES[columns]} />
+        <ProductCard
+          key={p.key ?? p.slug}
+          p={p}
+          priority={i < priorityCount}
+          sizes={SIZES[columns]}
+          showNewBadge={showNewBadge}
+        />
       ))}
     </div>
   )
