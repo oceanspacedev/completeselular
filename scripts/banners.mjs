@@ -221,13 +221,6 @@ async function writeCutout(p, dir, name, size) {
   return { src: `/img/${dir}/${name}.webp`, w: size, h: size }
 }
 
-const kinds = []
-for (const k of KINDS) {
-  const p = newest(all.filter((x) => productKind(x.name) === k.id))
-  if (p) kinds.push({ id: k.id, label: k.label, img: await writeCutout(p, 'kinds', k.id, 200) })
-}
-await fs.writeFile(path.join(ROOT, 'src', 'data', 'kinds.json'), JSON.stringify(kinds, null, 2) + '\n')
-
 const { brands } = JSON.parse(await fs.readFile(path.join(ROOT, 'src', 'data', 'brands.json'), 'utf8'))
 const tiles = []
 for (const b of [...brands].sort((a, c) => c.total - a.total)) {
@@ -236,4 +229,15 @@ for (const b of [...brands].sort((a, c) => c.total - a.total)) {
   if (tiles.length === 4) break
 }
 await fs.writeFile(path.join(ROOT, 'src', 'data', 'brand-tiles.json'), JSON.stringify(tiles, null, 2) + '\n')
+
+// The kind shortcuts sit right above the tiles, so they skip the tiles' brands: the "HP" photo
+// should not be the same phone as the OPPO tile next to it
+const tileBrands = new Set(tiles.map((t) => t.slug))
+const kinds = []
+for (const k of KINDS) {
+  const ofKind = all.filter((x) => productKind(x.name) === k.id)
+  const p = newest(ofKind.filter((x) => !tileBrands.has(x.brand))) ?? newest(ofKind)
+  if (p) kinds.push({ id: k.id, label: k.label, img: await writeCutout(p, 'kinds', k.id, 200) })
+}
+await fs.writeFile(path.join(ROOT, 'src', 'data', 'kinds.json'), JSON.stringify(kinds, null, 2) + '\n')
 console.log(`${kinds.length} kind shortcuts, ${tiles.length} brand tiles`)

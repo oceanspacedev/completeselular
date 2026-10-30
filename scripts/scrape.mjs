@@ -338,6 +338,16 @@ const BRAND_ALIASES = {
 }
 // Brands the store sells but has no taxonomy term for
 const EXTRA_BRANDS = { villaon: 'Villaon' }
+// WordPress title-cases every brand; these are written the way the brands write themselves
+const BRAND_NAMES = {
+  oppo: 'OPPO',
+  vivo: 'vivo',
+  itel: 'itel',
+  tecno: 'TECNO',
+  realme: 'realme',
+  hotwav: 'HOTWAV',
+  honor: 'HONOR',
+}
 
 // Earbuds, watches, cases, … inherit the phone spec template ("RAM 512 MB", "Storage N/A")
 const ACCESSORY =
@@ -435,7 +445,9 @@ function titleCapacity(name, slug, features) {
 
 async function scrapeProducts(extraSlugs) {
   console.log('• Brands & categories')
-  const brands = await fetchJson(`${ORIGIN}/wp-json/wp/v2/aps-brands?per_page=100&_fields=id,name,slug,count`)
+  const brands = (await fetchJson(`${ORIGIN}/wp-json/wp/v2/aps-brands?per_page=100&_fields=id,name,slug,count`)).map(
+    (b) => ({ ...b, name: BRAND_NAMES[b.slug] ?? b.name }),
+  )
   const cats = await fetchJson(`${ORIGIN}/wp-json/wp/v2/aps-cats?per_page=100&_fields=id,name,slug,count`)
 
   console.log(`• Product list (${PER_BRAND}/brand)`)
@@ -612,7 +624,7 @@ async function scrapeProduct(p) {
     name,
     date: p.date,
     brand: brand?.slug ?? null,
-    brandName: brand?.name ?? null,
+    brandName: brand ? (BRAND_NAMES[brand.slug] ?? brand.name) : null,
     category: cat?.slug ?? null,
     categoryName: cat?.name ?? null,
     price,

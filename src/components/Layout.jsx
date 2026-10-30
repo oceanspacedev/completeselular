@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
-import { ArrowRight, ChevronRight, CircleAlert, GitCompareArrows, Menu, Search, X } from 'lucide-react'
+import { ArrowRight, ChevronRight, CircleAlert, Menu, Search, X } from 'lucide-react'
 import site from '../data/site.json'
 import { ariaCurrent, bottomNav, footerNav, mainNav, moreNav, navMatch } from './nav'
 import { socials, WhatsAppIcon } from './icons'
@@ -281,10 +281,6 @@ function focusWhenReady(find) {
 
 /* ---------- Header ---------- */
 
-// Icon buttons sit on the navy header band
-const iconButton =
-  'relative grid size-10 place-items-center rounded-lg text-white transition-colors hover:bg-white/10 active:bg-white/20 pointer-coarse:size-11 aria-[current=page]:bg-white aria-[current=page]:text-navy-700'
-
 export function SearchForm({ autoFocus, onDone, onEscape, defaultQuery, withButton, className = '' }) {
   const navigate = useNavigate()
   const { pathname, search } = useLocation()
@@ -337,7 +333,6 @@ export function SearchForm({ autoFocus, onDone, onEscape, defaultQuery, withButt
 // Marketplace-style header: a navy band with the logo and an always-visible search field,
 // then (desktop) a darker strip with the section links.
 function Header() {
-  const compareCount = useCompare().length
   const { pathname, search } = useLocation()
   return (
     // The whole header stays pinned. Phones: a 48px logo row over a 52px search row (100px);
@@ -350,33 +345,17 @@ function Header() {
 
         <SearchForm key={pathname + search} className="mx-auto hidden max-w-xl sm:flex" />
 
-        <div className="ml-auto flex items-center gap-1 sm:ml-0">
-          <a
-            href={waLink()}
-            target="_blank"
-            rel="noopener"
-            className="hidden h-10 items-center gap-2 rounded-lg border border-white/60 px-3 text-sm font-bold whitespace-nowrap transition-colors hover:bg-white/10 md:inline-flex"
-          >
-            <WhatsAppIcon className="size-4" /> Chat Admin
-            <span className="sr-only"> (buka di tab baru)</span>
-          </a>
-          <Link
-            to="/bandingkan"
-            className={iconButton}
-            aria-current={pathname === '/bandingkan' ? 'page' : undefined}
-            aria-label={compareCount ? `Bandingkan produk, ${compareCount} dipilih` : 'Bandingkan produk'}
-          >
-            <GitCompareArrows className="size-5" aria-hidden />
-            {compareCount > 0 && (
-              <span
-                aria-hidden
-                className="bg-accent-600 ring-navy-700 absolute top-0.5 right-0.5 grid size-4 place-items-center rounded-full text-[10px] font-bold text-white ring-2"
-              >
-                {compareCount}
-              </span>
-            )}
-          </Link>
-        </div>
+        {/* Just the one WhatsApp entry, as a plain link: compare lives in the menus, the footer and
+            the "added" toast, so the bar stays logo + search */}
+        <a
+          href={waLink()}
+          target="_blank"
+          rel="noopener"
+          className="hidden h-10 shrink-0 items-center gap-1.5 rounded-lg px-2 text-sm font-semibold whitespace-nowrap text-white/90 transition-colors hover:bg-white/10 hover:text-white md:inline-flex"
+        >
+          <WhatsAppIcon className="size-[18px]" /> Chat Admin
+          <span className="sr-only"> (buka di tab baru)</span>
+        </a>
       </div>
 
       <div className="container-page flex h-13 items-start sm:hidden">
@@ -384,7 +363,7 @@ function Header() {
       </div>
 
       <nav className="bg-navy-800 hidden lg:block" aria-label="Navigasi utama">
-        <ul className="container-page flex h-11 items-stretch gap-1">
+        <ul className="container-page flex h-11 items-stretch justify-center gap-1">
           {mainNav.map((n) => {
             const match = navMatch(n, pathname)
             return (
@@ -515,7 +494,7 @@ function BottomNav() {
 /* ---------- Compare toast ---------- */
 
 // Visible counterpart of two compare announcements, which otherwise only reach screen readers: a
-// product added from a card (the header icon keeps the count afterwards) and a refused add
+// product added from a card (with the running count and a link to the compare page) and a refused add
 // ("Maksimal 3 produk"). The product page shows its own line under the button, so adds there stay
 // silent. compare.js already speaks both, so this is not a live region. It stays while hovered or
 // focused so there is time to reach its link.

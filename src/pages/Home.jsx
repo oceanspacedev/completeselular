@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BadgeCheck, ChevronLeft, ChevronRight, CreditCard, Star, Store } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import site from '../data/site.json'
 import houseBanners from '../data/banners.json'
 import kindShortcuts from '../data/kinds.json'
@@ -144,9 +144,8 @@ export default function Home() {
     <>
       <Seo jsonLd={jsonLd} />
       <h1 className="sr-only">Complete Selular — toko HP, tablet &amp; aksesoris resmi</h1>
-      {/* Section order follows Eraspace's home: categories, banners, category tiles, a
-          recommendation shelf on a coloured band, the store's promises, posters, then shelves */}
-      <CategoryRow />
+      {/* Section order follows Eraspace's home: banners, brand tiles, a recommendation shelf on a
+          coloured band, the store's promises, posters, then shelves */}
       <Hero />
       <BrandTiles />
 
@@ -234,12 +233,15 @@ function Hero() {
   const [tick, setTick] = useState(0) // bumped by user input to restart the timer
   const held = useRef(false) // a finger or mouse button is down on the track
 
-  // On phones the slides are narrower than the track (the next one peeks in), so positions come
-  // from the slides themselves rather than the track width
+  // On phones the slides are narrower than the track and centred (both neighbours peek in), so
+  // positions come from the slides' centres rather than the track width
+  const centre = (el, child) => child.offsetLeft - el.offsetLeft + child.offsetWidth / 2 - el.clientWidth / 2
   const go = (i, smooth = true) => {
     const el = track.current
     if (!el?.children[i]) return
-    el.scrollTo({ left: el.children[i].offsetLeft - el.children[0].offsetLeft, behavior: smooth ? 'smooth' : 'auto' })
+    el.scrollTo({ left: centre(el, el.children[i]), behavior: smooth ? 'smooth' : 'auto' })
+    // Dots follow at once instead of waiting for the smooth scroll's scroll events
+    setIndex(i)
   }
 
   useEffect(() => {
@@ -248,11 +250,21 @@ function Hero() {
     return () => clearTimeout(t)
   }, [index, tick, slides.length])
 
+  // A rotated phone or resized window changes the slide widths; put the current slide back in place
+  useEffect(() => {
+    const onResize = () => go(index, false)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [index])
+
   // The visible slide follows the scroll position, whether a swipe, a dot or the timer moved it
   const onScroll = () => {
     const el = track.current
-    const step = el.children[1] ? el.children[1].offsetLeft - el.children[0].offsetLeft : el.clientWidth
-    const i = Math.min(slides.length - 1, Math.round(el.scrollLeft / step))
+    let i = 0
+    for (let k = 1; k < el.children.length; k++) {
+      if (Math.abs(centre(el, el.children[k]) - el.scrollLeft) < Math.abs(centre(el, el.children[i]) - el.scrollLeft))
+        i = k
+    }
     if (i !== index) setIndex(i)
   }
   const restart = () => setTick((t) => t + 1)
@@ -293,8 +305,8 @@ function Hero() {
             onTouchStart={() => (held.current = true)}
             onTouchEnd={release}
             onWheel={restart}
-            // Phones: the next banner peeks in at the right edge, as on Eraspace; full width from sm
-            className="-mx-4 flex snap-x snap-mandatory scroll-px-4 scrollbar-none gap-2 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:scroll-px-0 sm:gap-0 sm:rounded-lg sm:px-0"
+            // Phones: the banner sits centred with both neighbours peeking in, as on Eraspace; full width from sm
+            className="-mx-4 flex snap-x snap-mandatory scrollbar-none gap-2 overflow-x-auto overscroll-x-contain px-[6%] sm:mx-0 sm:gap-0 sm:rounded-lg sm:px-0"
           >
             {slides.map((s, i) => (
               <div
@@ -302,7 +314,7 @@ function Hero() {
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${i + 1} dari ${slides.length}`}
-                className="w-[90%] shrink-0 snap-start sm:w-full"
+                className="w-[88%] shrink-0 snap-center sm:w-full"
               >
                 <Link
                   to={s.href}
@@ -350,52 +362,27 @@ function Hero() {
   )
 }
 
-// Shop by kind, Eraspace's category row: a product cut-out (scripts/banners.mjs) in a grey circle
-// with the name under it, five across on phones
-function CategoryRow() {
-  if (!kindShortcuts.length) return null
-  return (
-    <nav aria-label="Kategori" className="band">
-      <ul className="container-page grid grid-cols-5 gap-1 pt-3 pb-1 sm:flex sm:justify-center sm:gap-8 sm:pt-5">
-        {kindShortcuts.map((k) => (
-          <li key={k.id}>
-            <Link
-              to={`/katalog?jenis=${k.id}`}
-              className="group flex flex-col items-center gap-1.5 rounded-lg py-1 text-center"
-            >
-              <span className="grid size-14 place-items-center rounded-full bg-slate-100 p-2.5 transition-colors group-hover:bg-slate-200 sm:size-16">
-                <Img img={k.img} alt="" sizes="64px" className="size-full object-contain" />
-              </span>
-              <span className="text-ink group-hover:text-brand-700 text-xs leading-tight font-semibold">{k.label}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  )
-}
-
 // Eraspace's 2×2 category tiles, here the four biggest brands: name top left, their newest phone
 // cut out and cropped at the bottom right of a grey tile
 function BrandTiles() {
   if (brandTiles.length < 4) return null
   return (
     <section className="band" aria-label="Brand favorit">
-      <ul className="container-page grid grid-cols-2 gap-2 pb-4 sm:pb-6 lg:grid-cols-4 lg:gap-3">
+      <ul className="container-page grid grid-cols-2 gap-2 pb-4 sm:grid-cols-4 sm:pb-6 lg:gap-3">
         {brandTiles.map((b) => (
           <li key={b.slug}>
             <Link
               to={`/brand/${b.slug}`}
-              className="group relative block aspect-[16/10] overflow-hidden rounded-xl bg-slate-100 transition-colors hover:bg-slate-200"
+              className="group relative block aspect-[16/10] overflow-hidden rounded-xl bg-slate-100 transition-colors hover:bg-slate-200 sm:aspect-[5/3] lg:aspect-[2/1]"
             >
               <span className="text-ink absolute top-3 left-3 text-sm font-extrabold sm:top-4 sm:left-4 sm:text-base">
-                {BRAND_CASE[b.slug] ?? b.name}
+                {b.name}
               </span>
               <Img
                 img={b.img}
                 alt=""
                 sizes="(min-width: 1024px) 150px, 30vw"
-                className="absolute -right-2 -bottom-6 h-[105%] w-auto object-contain transition-transform duration-300 group-hover:-translate-y-1"
+                className="absolute right-0 -bottom-[10%] h-[85%] w-[56%] object-contain object-bottom transition-transform duration-300 group-hover:-translate-y-1 lg:-bottom-[14%] lg:h-[100%] lg:w-[50%]"
               />
             </Link>
           </li>
@@ -423,35 +410,25 @@ function ShelfPoster() {
   )
 }
 
-// Brand names as the brands write them, where the catalogue data has them title-cased
-const BRAND_CASE = { oppo: 'OPPO', vivo: 'vivo' }
-
-// The store's promises on one navy strip, like Eraspace's "Keuntungan belanja" banner
+// The store's promises as four figures, the same plain number-over-caption style as the stats on
+// Tentang Kami: no icons, thin rules between them
 function Benefits() {
   const items = [
-    [BadgeCheck, 'Produk resmi', 'bergaransi'],
-    [CreditCard, 'Cicilan', `${site.payments.length} partner`],
-    [Store, `${site.branchCount} cabang`, `sejak ${site.since}`],
-    [Star, `${ratingScore} di Google`, `${ratingCount} ulasan`],
+    ['Resmi', 'bergaransi'],
+    [site.payments.length, 'partner cicilan'],
+    [site.branchCount, `cabang sejak ${site.since}`],
+    [`${ratingScore}/5`, `${ratingCount} ulasan Google`],
   ]
   return (
-    <section className="band mt-2 py-3 sm:py-4" aria-label="Keuntungan belanja di Complete Selular">
-      <div className="container-page">
-        <ul className="bg-navy-800 grid grid-cols-4 gap-1 rounded-xl px-2 py-3 text-white sm:px-6 sm:py-4">
-          {items.map(([Icon, top, bottom]) => (
-            <li
-              key={top}
-              className="flex flex-col items-center gap-1 text-center sm:flex-row sm:justify-center sm:gap-3 sm:text-left"
-            >
-              <Icon className="text-brand-200 size-5 shrink-0 sm:size-6" aria-hidden />
-              <span className="text-xs leading-tight sm:text-sm">
-                <span className="block font-bold">{top}</span>
-                <span className="block text-white/75">{bottom}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <section className="band mt-2 py-4 sm:py-5" aria-label="Keuntungan belanja di Complete Selular">
+      <dl className="container-page divide-line grid grid-cols-4 divide-x">
+        {items.map(([value, label]) => (
+          <div key={label} className="flex flex-col px-2 text-center first:pl-0 last:pr-0">
+            <dt className="text-muted order-last mt-0.5 text-xs leading-snug sm:text-sm">{label}</dt>
+            <dd className="text-ink text-base font-extrabold tabular-nums sm:text-xl">{value}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   )
 }
@@ -459,69 +436,57 @@ function Benefits() {
 // Brand logos gliding past like a ticker. Moved with requestAnimationFrame + transform (not a CSS
 // animation), so it stays smooth and keeps running on PCs with Windows animation effects turned
 // off. The list is rendered twice; after one list's width the position wraps back invisibly.
+// The logos are pictures only, not links (a moving target is hard to hover or tap), on a plain
+// white band with no heading; the brand list is in the main menu and the footer.
 const BRAND_SPEED = 35 // px per second
 
 function BrandStrip() {
   const list = brands.filter((b) => site.brandLogos[b.slug]).sort((a, b) => b.total - a.total)
-  const wrap = useRef(null)
   const track = useRef(null)
 
   useEffect(() => {
-    const box = wrap.current
     const el = track.current
-    if (!box || !el) return
+    if (!el) return
     let pos = 0
     let last = performance.now()
     let frame
-    let focused = false
     const tick = (now) => {
       const dt = Math.min(now - last, 64) // a background tab must not jump on return
       last = now
       const loop = el.offsetWidth / 2
-      if (!focused && loop > 0) {
+      if (loop > 0) {
         pos = (pos + (BRAND_SPEED * dt) / 1000) % loop
         el.style.transform = `translate3d(${-pos}px, 0, 0)`
       }
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
-    // Keyboard users: stop while a logo is focused so the focused one stays where it is
-    const onIn = () => (focused = true)
-    const onOut = (e) => !box.contains(e.relatedTarget) && (focused = false)
-    box.addEventListener('focusin', onIn)
-    box.addEventListener('focusout', onOut)
-    return () => {
-      cancelAnimationFrame(frame)
-      box.removeEventListener('focusin', onIn)
-      box.removeEventListener('focusout', onOut)
-    }
+    return () => cancelAnimationFrame(frame)
   }, [])
 
   const tile = (b, copy) => (
-    <li key={`${b.slug}-${copy}`} className="shrink-0 pr-3" aria-hidden={copy || undefined}>
-      <Link
-        to={`/brand/${b.slug}`}
-        tabIndex={copy ? -1 : undefined}
-        className="flex h-16 w-32 items-center justify-center overflow-hidden rounded-lg bg-white transition-transform hover:-translate-y-0.5 sm:h-20 sm:w-40"
-      >
-        {/* The logo files carry ~25% whitespace on every side; scale it away so the marks read */}
-        <Img img={site.brandLogos[b.slug]} alt={copy ? '' : b.name} className="size-full scale-125 object-contain" />
-      </Link>
+    <li key={`${b.slug}-${copy}`} className="shrink-0 pr-2.5 sm:pr-4" aria-hidden={copy || undefined}>
+      <div className="border-line flex h-14 w-28 items-center justify-center overflow-hidden rounded-xl border bg-white sm:h-16 sm:w-36">
+        {/* The logo files carry wide margins; a slight zoom lets the marks fill the card */}
+        <Img
+          img={site.brandLogos[b.slug]}
+          alt={copy ? '' : b.name}
+          draggable={false}
+          className="size-full scale-[1.2] object-contain select-none"
+        />
+      </div>
     </li>
   )
 
-  // White logo cards on a navy band, like Eraspace's "Brand Pilihan"
   return (
-    <section className="bg-navy-800 mt-2 py-4 sm:py-6">
-      <div className="container-page">
-        <SectionHeader title="Brand Pilihan" to="/semua-brand" tone="dark" />
-      </div>
+    <section className="band mt-2 py-4 sm:py-6" aria-label="Brand resmi">
       {/* Soft fade at both edges so logos glide in and out instead of being cut off */}
-      <div
-        ref={wrap}
-        className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_5%,#000_95%,transparent)]"
-      >
-        <ul ref={track} className="flex w-max pl-4 will-change-transform sm:pl-6">
+      <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_4%,#000_96%,transparent)]">
+        <ul
+          ref={track}
+          aria-label="Brand resmi di Complete Selular"
+          className="flex w-max pl-4 will-change-transform sm:pl-6"
+        >
           {list.map((b) => tile(b, false))}
           {list.map((b) => tile(b, true))}
         </ul>
@@ -584,10 +549,11 @@ function PaymentStrip() {
           {site.payments.map((p) => (
             <li
               key={p.name}
-              className="border-line flex aspect-[5/2] items-center justify-center rounded-lg border bg-white p-2 sm:p-3"
+              className="border-line flex aspect-[5/2] items-center justify-center overflow-hidden rounded-lg border bg-white p-1.5 sm:p-3"
             >
-              {/* Fixed box + object-contain: every partner logo gets the same visual weight */}
-              <Img img={p.img} alt={p.name} className="size-full object-contain" />
+              {/* Fixed box + object-contain: every partner logo gets the same visual weight. The files
+                  carry wide margins, so they are scaled up into the box's padding */}
+              <Img img={p.img} alt={p.name} className="size-full scale-125 object-contain" />
             </li>
           ))}
         </ul>
@@ -621,8 +587,9 @@ function LatestArticles() {
                     img={a.cover}
                     alt=""
                     sizes="(min-width: 1024px) 370px, (min-width: 640px) 50vw, 96px"
-                    // Covers are mostly square posters with text on them: show them whole, never cropped
-                    className="size-24 shrink-0 rounded-lg bg-slate-100 object-contain sm:aspect-[4/3] sm:size-auto sm:w-full sm:rounded-none"
+                    // Covers are mostly posters with text: shown whole on the cards (sm+); the small phone thumbnail
+                    // fills its square instead, since a letterboxed 96px poster reads as an empty grey box
+                    className="size-24 shrink-0 rounded-lg bg-slate-100 object-cover sm:aspect-[4/3] sm:size-auto sm:w-full sm:rounded-none sm:object-contain"
                   />
                   <div className="min-w-0 sm:p-3">
                     <p className="text-muted text-xs">

@@ -19,7 +19,7 @@
   },
   {
     "slug": "vivo",
-    "name": "Vivo",
+    "name": "vivo",
     "img": {
       "src": "/img/brand-tiles/vivo.webp",
       "w": 320,
@@ -28,7 +28,7 @@
   },
   {
     "slug": "oppo",
-    "name": "Oppo",
+    "name": "OPPO",
     "img": {
       "src": "/img/brand-tiles/oppo.webp",
       "w": 320,
